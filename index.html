@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analista Sênior AI</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: var(--tg-theme-bg-color, #1e1e1e); color: var(--tg-theme-text-color, #ffffff); }
+        .card { background-color: var(--tg-theme-secondary-bg-color, #2d2d2d); }
+        .btn-main { background-color: var(--tg-theme-button-color, #3b82f6); color: var(--tg-theme-button-text-color, #ffffff); }
+    </style>
+</head>
+<body class="p-4 font-sans select-none">
+    <div class="max-w-md mx-auto space-y-6">
+        <div class="text-center mt-4">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">Analista Turbo 🚀</h1>
+            <p class="text-sm opacity-70 mt-1">Valuation & IA Sênior</p>
+        </div>
+
+        <div class="card p-5 rounded-2xl shadow-xl space-y-5 border border-gray-700">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider mb-2 opacity-70">Ativo / Ticker</label>
+                <input type="text" id="ticker" placeholder="Ex: VALE3" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white uppercase text-lg transition-all outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider mb-2 opacity-70">Documentos (PDF)</label>
+                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-xl hover:bg-gray-800 hover:border-blue-500 transition-all cursor-pointer group">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="fas fa-cloud-upload-alt text-3xl mb-3 text-gray-400 group-hover:text-blue-400 transition-colors"></i>
+                        <p class="text-sm text-gray-400 group-hover:text-white">Toque para enviar PDFs</p>
+                    </div>
+                    <input type='file' id="files" multiple class="hidden" onchange="updateCount()" />
+                </label>
+                <p id="file-count" class="text-xs text-center mt-2 text-green-400 font-medium h-4"></p>
+            </div>
+
+            <button onclick="analisar()" id="btn-analisar" class="btn-main w-full py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <span>GERAR ANÁLISE</span>
+                <i class="fas fa-magic"></i>
+            </button>
+        </div>
+
+        <div id="resultado" class="hidden pb-10">
+            <div id="loading" class="hidden text-center py-10">
+                <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="animate-pulse">Consultando Mercado & Lendo PDFs...</p>
+            </div>
+            
+            <div id="content" class="card p-5 rounded-xl shadow-lg border border-gray-700 hidden prose prose-invert max-w-none">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // --- IMPORTANTE: SUBSTITUA ISSO DEPOIS PELO SEU LINK DO NGROK ---
+        const API_URL = "https://nonroyal-ecclesiologically-hortense.ngrok-free.dev";
+        // Exemplo: "https://a1b2-200-100-50-25.ngrok-free.app"
+
+        function updateCount() {
+            const count = document.getElementById('files').files.length;
+            const label = document.getElementById('file-count');
+            if(count > 0) {
+                label.innerText = `✅ ${count} arquivo(s) pronto(s)`;
+            } else {
+                label.innerText = "";
+            }
+        }
+
+        async function analisar() {
+            const ticker = document.getElementById('ticker').value;
+            const fileInput = document.getElementById('files');
+
+            if (!ticker) { tg.showAlert("❌ Digite o Ticker da ação!"); return; }
+            if (fileInput.files.length === 0) { tg.showAlert("❌ Selecione pelo menos um PDF!"); return; }
+            if (API_URL === "URL_DA_SUA_API") { tg.showAlert("⚠️ Configure a URL da API no código!"); return; }
+
+            document.getElementById('resultado').classList.remove('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('content').classList.add('hidden');
+            document.getElementById('btn-analisar').disabled = true;
+            document.getElementById('btn-analisar').classList.add('opacity-50');
+
+            const formData = new FormData();
+            formData.append('ticker', ticker);
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+
+            try {
+                // Adiciona /analisar ao final da URL base
+                const response = await fetch(`${API_URL}/analisar`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Falha na API");
+
+                const data = await response.json();
+
+                // Monta o HTML do relatório
+                const html = `
+                    <div class="flex justify-between items-center border-b border-gray-600 pb-3 mb-4">
+                        <h2 class="text-2xl font-bold text-white">${data.ticker.toUpperCase()}</h2>
+                        <span class="bg-blue-600 text-xs px-2 py-1 rounded">R$ ${data.dados.preco}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-gray-800 p-3 rounded-lg text-center border border-gray-600">
+                            <p class="text-xs text-gray-400 uppercase">Graham (Justo)</p>
+                            <p class="text-lg font-mono font-bold text-green-400">R$ ${data.dados.graham}</p>
+                        </div>
+                        <div class="bg-gray-800 p-3 rounded-lg text-center border border-gray-600">
+                            <p class="text-xs text-gray-400 uppercase">Bazin (Teto)</p>
+                            <p class="text-lg font-mono font-bold text-yellow-400">R$ ${data.dados.bazin || '---'}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 text-sm leading-relaxed text-gray-200">
+                        ${data.relatorio_ia}
+                    </div>
+                    
+                    <button onclick="location.reload()" class="w-full mt-6 py-3 bg-gray-700 rounded-lg text-sm font-bold hover:bg-gray-600">Nova Análise</button>
+                `;
+
+                document.getElementById('content').innerHTML = html;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+
+            } catch (error) {
+                tg.showAlert("Erro de conexão: Verifique se o Python está rodando.");
+                document.getElementById('resultado').classList.add('hidden');
+            } finally {
+                document.getElementById('btn-analisar').disabled = false;
+                document.getElementById('btn-analisar').classList.remove('opacity-50');
+            }
+        }
+    </script>
+</body>
+</html>
